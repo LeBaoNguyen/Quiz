@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+        }
+
+        /* Video Background - giảm 20% kích thước */
+        video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.4242);
+            min-width: 125vw;
+            min-height: 125vh;
+            width: auto;
+            height: auto;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        /* Overlay mờ nền */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+        }
+
+        /* Khung thông báo */
+        .intro-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw;
+            max-width: 80vh;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 3;
+        }
+
+        .intro-box img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* Nút Đóng */
+        .close-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgb(21, 1, 94);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        .close-btn:hover {
+            background: rgb(48, 50, 94);
+        }
+
+        /* Nút giao diện neon */
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+            z-index: 2;
+            opacity: 1;
+            transition: opacity 1.75s ease-in-out;
+        }
+
+
+        .menu button {
+            width: 250px;
+            padding: 15px;
+            font-size: 20px;
+            color: orange;
+            background: black;
+            border: 2px solid orange;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 10px orange;
+            transition: 0.3s;
+        }
+
+        .menu button:hover {
+            background: orange;
+            color: black;
+            box-shadow: 0 0 20px orange;
+        }
+
+        /* Bảng Thêm */
+        .extra-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 400px;
+            background: black;
+            border: 2px solid cyan;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 0 15px cyan;
+            z-index: 4;
+        }
+
+        .extra-box button {
+            width: 200px;
+            padding: 10px;
+            font-size: 18px;
+            color: cyan;
+            background: black;
+            border: 2px solid cyan;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 0 10px cyan;
+            transition: 0.3s;
+        }
+
+        .extra-box button:hover {
+            background: cyan;
+            color: black;
+            box-shadow: 0 0 20px cyan;
+        }
+
+        .extra-box .close-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: cyan;
+            color: black;
+            border: none;
+            width: 80px;
+            height: 40px;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .extra-box .close-btn:hover {
+            background: lightcyan;
+        }
+        .credit-box {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: none; /* Ban đầu ẩn */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .credit-content {
+            position: absolute;
+            bottom: -100%;
+            width: 100%;
+            text-align: center;
+            font-size: 20px;
+            color: white;
+            animation: creditRoll 8s linear forwards;
+        }
+
+        @keyframes creditRoll {
+            from {
+                bottom: -100%;
+            }
+            to {
+                bottom: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop>
+        <source src="cat.mp4" type="video/mp4">
+    </video>
+
+    <audio id="backgroundMusic" loop>
+        <source src="theme1.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="intro-box" id="introBox">
+        <img src="sign.png" alt="Giới thiệu">
+        <button class="close-btn" onclick="closeIntro()">Đóng</button>
+    </div>
+
+    <div class="menu" id="menu">
+        <button>Bắt đầu</button>
+        <button>Cài đặt</button>
+        <button onclick="openExtraBox()">Thêm</button>
+    </div>
+
+    <div class="extra-box" id="extraBox">
+        <button onclick="hideAll()">Xem Background</button>
+        <button onclick="startCredit()">Giới Thiệu</button>
+        <a href="https://lebaonguyen.github.io/Quiz-Project/"><button>EASTER EGGGG</button></a>
+        <button class="close-btn" onclick="closeExtraBox()">Đóng</button>
+
+        <div class="credit-box" id="creditBox">
+            <div class="credit-content">
+                <p>Produced by Team 3</p><br>
+                <p>Quiz-Project</p><br>
+                <p>Gồm các thành viên :</p><br>
+                <p>Trưởng Nhóm : Bảo Nguyên</p><br>
+                <p>Phân công, lên kế hoạch : Chấn Huy</p><br>
+                <p>Làm PowerPoint: Thanh Vy</p><br>
+                <p>Tìm ý, viết content: Thành Lợi</p><br>
+                <p>Thuyết trình: Như Huỳnh</p><br>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeIntro() {
+            document.getElementById("introBox").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+            
+            let audio = document.getElementById("backgroundMusic");
+            audio.play();
+        }
+
+        function openExtraBox() {
+            let extraBox = document.getElementById("extraBox");
+            extraBox.style.display = "flex";  // Hiển thị phần tử
+            extraBox.style.opacity = "0";     // Bắt đầu với trạng thái trong suốt
+
+            // Thêm hiệu ứng hiện dần trong 1s
+            setTimeout(() => {
+                extraBox.style.transition = "opacity 0.5s ease-in-out";
+                extraBox.style.opacity = "1";
+            }, 10); // Một độ trễ nhỏ để đảm bảo CSS áp dụng đúng
+        }
+
+
+        function closeExtraBox() {
+            let extraBox = document.getElementById("extraBox");
+            
+            // Đặt opacity về 0 để tạo hiệu ứng biến mất
+            extraBox.style.transition = "opacity 0.3s ease-in-out";
+            extraBox.style.opacity = "0";
+
+            // Đợi 1s rồi ẩn bảng hoàn toàn (display: none;)
+            setTimeout(() => {
+                extraBox.style.display = "none";
+            }, 500); 
+        }
+        function hideAll() {
+            // Ẩn tất cả các phần tử ngoại trừ video nền
+            document.getElementById("menu").style.display = "none";
+            document.getElementById("extraBox").style.display = "none";
+            // Khi click vào bất kỳ đâu trên màn hình, menu sẽ hiện lại
+            setTimeout(() => {
+                document.body.addEventListener("click", showMenu, { once: true });
+            }, 1000);
+        }
+
+        function showMenu() {
+            let menu = document.getElementById("menu");
+            menu.style.display = "flex";
+            menu.style.opacity = "0";
+
+            // Tạo hiệu ứng mờ dần bằng transition
+            setTimeout(() => {
+                menu.style.transition = "opacity 0.5s ease-in-out";
+                menu.style.opacity = "1";
+            }, 50); 
+        }
+        function startCredit() {
+            let extraBox = document.getElementById("extraBox");
+            let creditBox = document.getElementById("creditBox");
+            let creditContent = document.querySelector(".credit-content");
+            let buttons = extraBox.querySelectorAll("button");
+            let closeButton = document.querySelector(".extra-box .close-btn");
+
+            // Ẩn tất cả các nút
+            buttons.forEach(btn => btn.style.display = "none");
+
+            // Ẩn nút đóng
+            closeButton.style.display = "none";
+
+            // Hiển thị khung credit
+            creditBox.style.display = "flex";
+
+            // ⚡ Reset và kích hoạt animation
+            creditContent.style.animation = "none";
+            void creditContent.offsetWidth;
+            creditContent.style.animation = "creditRoll 8s linear forwards";
+
+            // Kích hoạt khả năng click để bỏ qua sau 1s
+            setTimeout(() => {
+                extraBox.addEventListener("click", stopCredit, { once: true });
+            }, 1000);
+
+            // Sau khi credit chạy xong (8s), đợi 1s rồi đặt lại trạng thái
+            setTimeout(() => {
+                stopCredit();
+            }, 9000);
+        }
+
+        function stopCredit() {
+            let extraBox = document.getElementById("extraBox");
+            let creditBox = document.getElementById("creditBox");
+            let buttons = extraBox.querySelectorAll("button");
+            let closeButton = document.querySelector(".extra-box .close-btn");
+
+            // Ẩn credit ngay lập tức
+            creditBox.style.display = "none";
+
+            // Hiện lại các nút với hiệu ứng mờ dần (0.5s)
+            buttons.forEach(btn => {
+                btn.style.opacity = "0";
+                btn.style.display = "block";
+                setTimeout(() => {
+                    btn.style.transition = "opacity 0.5s ease-in-out";
+                    btn.style.opacity = "1";
+                }, 50);
+            });
+
+            // Hiện lại nút đóng
+            closeButton.style.display = "block";
+
+            // Gỡ bỏ sự kiện click sau khi credit đã dừng
+            extraBox.removeEventListener("click", stopCredit);
+        }
+
+    </script>
+</body>
+</html>
