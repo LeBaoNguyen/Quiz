@@ -305,7 +305,7 @@
         <source src="video/cat.mp4" type="video/mp4">
     </video>
 
-    <audio id="backgroundMusic" loop>
+    <audio id="backgroundMusic">
         <source src="audio/theme1.mp3" type="audio/mpeg">
     </audio>
 
@@ -356,8 +356,8 @@
             <select id="audioSelect" onchange="changeBackgroundMusic()">
                 <option value="audio/theme1.mp3">Nhạc nền 1</option>
                 <option value="audio/theme2.mp3">Dark Embient (Recommended)</option>
-                <option value="audio/theme3.mp3">This's fallin' in love</option>
-                <option value="audio/theme4.mp3">Nhạc nền 4</option>
+                <option value="audio/theme3.mp3">Interstella Journey</option>
+                <option value="audio/theme4.mp3">This's fallin' in love</option>
             </select>
         </div>        
         <button class="close-btn" onclick="closeExtraBox2()">Đóng</button>
@@ -511,6 +511,28 @@
             audio.src = selectedAudio;
             audio.play(); // Phát ngay sau khi thay đổi nhạc
         }
+        // Danh sách nhạc theo thứ tự
+        const audioTracks = ["audio/theme1.mp3", "audio/theme2.mp3", "audio/theme3.mp3"];
+        let currentTrack = 0;
+
+        const audio = document.getElementById("backgroundMusic");
+
+        // Khi nhạc kết thúc, chuyển sang bài kế tiếp
+        audio.addEventListener("ended", () => {
+            currentTrack = (currentTrack + 1) % audioTracks.length; // Lặp lại từ đầu sau bài cuối
+            audio.src = audioTracks[currentTrack];
+            audio.play();
+        });
+
+        // Khi ấn "Đóng" intro, bắt đầu phát nhạc
+        function closeIntro() {
+            document.getElementById("introBox").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+            
+            audio.src = audioTracks[currentTrack];
+            audio.play();
+        }
+
 
     </script>
 </body>
