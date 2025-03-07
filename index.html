@@ -323,7 +323,7 @@
     </div>
 
     <div class="extra-box" id="extraBox">
-        <button onclick="hideAll()">Xem Background</button>
+        <button onclick="hideAll()" onclick="restartVideo()">Xem Background</button>
         <button onclick="startCredit()">Giới Thiệu</button>
         <a href="https://lebaonguyen.github.io/Quiz-Project/"><button>EASTER EGGGG</button></a>
         <button class="close-btn" onclick="closeExtraBox()">Đóng</button>
@@ -374,28 +374,21 @@
 
         function openExtraBox() {
             let extraBox = document.getElementById("extraBox");
-            extraBox.style.display = "flex";  // Hiển thị phần tử
-            extraBox.style.opacity = "0";     // Bắt đầu với trạng thái trong suốt
-
-            // Thêm hiệu ứng hiện dần trong 1s
+            extraBox.style.display = "flex";
+            extraBox.style.opacity = "0";
             setTimeout(() => {
                 extraBox.style.transition = "opacity 0.5s ease-in-out";
                 extraBox.style.opacity = "1";
-            }, 10); // Một độ trễ nhỏ để đảm bảo CSS áp dụng đúng
+            }, 10);
         }
-
 
         function closeExtraBox() {
             let extraBox = document.getElementById("extraBox");
-            
-            // Đặt opacity về 0 để tạo hiệu ứng biến mất
             extraBox.style.transition = "opacity 0.3s ease-in-out";
             extraBox.style.opacity = "0";
-
-            // Đợi 1s rồi ẩn bảng hoàn toàn (display: none;)
             setTimeout(() => {
                 extraBox.style.display = "none";
-            }, 500); 
+            }, 500);
         }
         function hideAll() {
             // Ẩn tất cả các phần tử ngoại trừ video nền
@@ -491,6 +484,7 @@
             setTimeout(() => {
                 box.style.display = "none";
             }, 500);
+            restartVideo(); // Phát lại video
         }
         function setVolume(value) {
             let audio = document.getElementById("backgroundMusic");
@@ -559,16 +553,11 @@
             audio.src = audioTracks[currentTrack].src;
             audio.play();
         });
-        // Lấy phần tử video và nút "Xem background"
-        const videoBg = document.getElementById("backgroundVideo");
-        const viewBackgroundBtn = document.getElementById("viewBackgroundBtn");
-
-        // Khi ấn "Xem background", đảm bảo video tiếp tục phát
-        viewBackgroundBtn.addEventListener("click", () => {
-            videoBg.style.display = "block"; // Hiển thị video nếu bị ẩn
-            videoBg.play().catch(err => console.log("Lỗi phát video:", err)); // Phát video lại nếu bị dừng
-        });
-
+        function restartVideo() {
+            let video = document.querySelector("video");
+            video.currentTime = 0; // Đặt lại thời gian về đầu
+            video.play(); // Phát lại video
+        }
 
     </script>
 </body>
