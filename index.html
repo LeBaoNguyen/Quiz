@@ -213,29 +213,112 @@
                 bottom: 100%;
             }
         }
+        #extraBox2 {
+            width: 660px;
+            height: 440px;
+            background: black; /* Đổi nền thành cyber */
+            border: 2px solid #ff00ff; /* Hồng neon */
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 0 15px #ff00ff; /* Hiệu ứng phát sáng */
+            z-index: 5;
+        }
+
+        /* Chỉnh màu chữ của các label */
+        #extraBox2 label {
+            color: #ff00ff; /* Hồng neon */
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        #extraBox2 input[type="range"] {
+            width: 80%;
+            margin: 10px 0;
+        }
+        .slider-container {
+            width: 45%;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #ff00ff; /* Hồng neon */
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            margin: 10px 0;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+
+        /* Chỉnh màu chữ cho nhãn */
+        .slider-container label {
+            display: block;
+            color: #ff00ff; /* Hồng neon */
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        #extraBox2 select {
+            background: black;
+            color: #1df4d0; /* Hồng neon */
+            border: 2px solid #1cadf5;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #13b8f4;
+            transition: 0.3s;
+        }
+
+        #extraBox2 select:hover {
+            background: #1ccceb;
+            color: black;
+        }
+
+        #audioSelect option {
+            background: black;
+            color: rgb(15, 233, 233);
+            font-size: 16px;
+            padding: 10px;
+            border: none;
+        }
+        #extraBox2 .close-btn {
+            bottom: 3%;
+            background: #ff00ff; /* Hồng neon */
+            color: black;
+            border: none;
+            width: 80px;
+            height: 40px;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+
+        #extraBox2 .close-btn:hover {
+            background: #ff66ff;
+            box-shadow: 0 0 15px #ff66ff;
+        }
 
     </style>
 </head>
 <body>
 
     <video autoplay muted loop>
-        <source src="cat.mp4" type="video/mp4">
+        <source src="video/cat.mp4" type="video/mp4">
     </video>
 
     <audio id="backgroundMusic" loop>
-        <source src="theme1.mp3" type="audio/mpeg">
+        <source src="audio/theme1.mp3" type="audio/mpeg">
     </audio>
 
     <div class="overlay" id="overlay"></div>
 
     <div class="intro-box" id="introBox">
-        <img src="sign.png" alt="Giới thiệu">
+        <img src="imgs/sign.png" alt="Giới thiệu">
         <button class="close-btn" onclick="closeIntro()">Đóng</button>
     </div>
 
     <div class="menu" id="menu">
         <button>Bắt đầu</button>
-        <button>Cài đặt</button>
+        <button onclick="openExtraBox2()">Cài đặt</button>
         <button onclick="openExtraBox()">Thêm</button>
     </div>
 
@@ -258,6 +341,27 @@
             </div>
         </div>
     </div>
+    <div class="extra-box" id="extraBox2">
+        <div class="slider-container">
+            <label for="volume">Âm lượng</label>
+            <input type="range" id="volume" min="0" max="1" step="0.01" value="1" oninput="setVolume(this.value)">
+        </div>
+     
+        <div class="slider-container">
+            <label for="brightness">Độ sáng</label>
+            <input type="range" id="brightness" min="0.2" max="1" step="0.01" value="1" oninput="setBrightness(this.value)">
+        </div>
+        <div class="slider-container">
+            <label for="audioSelect">Chọn nhạc nền:</label>
+            <select id="audioSelect" onchange="changeBackgroundMusic()">
+                <option value="audio/theme1.mp3">Nhạc nền 1</option>
+                <option value="audio/theme2.mp3">Dark Embient (Recommended)</option>
+                <option value="audio/theme3.mp3">This's fallin' in love</option>
+                <option value="audio/theme4.mp3">Nhạc nền 4</option>
+            </select>
+        </div>        
+        <button class="close-btn" onclick="closeExtraBox2()">Đóng</button>
+    </div>    
 
     <script>
         function closeIntro() {
@@ -370,6 +474,42 @@
 
             // Gỡ bỏ sự kiện click sau khi credit đã dừng
             extraBox.removeEventListener("click", stopCredit);
+        }
+        function openExtraBox2() {
+            let box = document.getElementById("extraBox2");
+            box.style.display = "flex";
+            box.style.opacity = "0";
+            setTimeout(() => {
+                box.style.transition = "opacity 0.5s ease-in-out";
+                box.style.opacity = "1";
+            }, 10);
+        }
+
+        function closeExtraBox2() {
+            let box = document.getElementById("extraBox2");
+            box.style.opacity = "0";
+            setTimeout(() => {
+                box.style.display = "none";
+            }, 500);
+        }
+        function setVolume(value) {
+            let audio = document.getElementById("backgroundMusic");
+            let video = document.querySelector("video");
+
+            audio.volume = value;
+            video.volume = value; // Nếu sau này có video có âm thanh
+        }
+
+
+        function setBrightness(value) {
+            document.querySelector("video").style.filter = `brightness(${value})`;
+        }
+        function changeBackgroundMusic() {
+            let audio = document.getElementById("backgroundMusic");
+            let selectedAudio = document.getElementById("audioSelect").value;
+
+            audio.src = selectedAudio;
+            audio.play(); // Phát ngay sau khi thay đổi nhạc
         }
 
     </script>
