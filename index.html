@@ -512,26 +512,62 @@
             audio.play(); // Phát ngay sau khi thay đổi nhạc
         }
         // Danh sách nhạc theo thứ tự
-        const audioTracks = ["audio/theme1.mp3", "audio/theme2.mp3", "audio/theme3.mp3"];
-        let currentTrack = 0;
+        const audioTracks = [
+            { src: "audio/theme1.mp3", name: "Theme 1" },
+            { src: "audio/theme2.mp3", name: "Theme 2" },
+            { src: "audio/theme3.mp3", name: "Theme 3" }
+        ];
+        let currentTrack = localStorage.getItem("currentTrack") ? parseInt(localStorage.getItem("currentTrack")) : 0;
 
         const audio = document.getElementById("backgroundMusic");
+        const trackSelect = document.getElementById("trackSelect");
+
+        // Cập nhật danh sách chọn nhạc trong extrabox2
+        function updateTrackSelect() {
+            trackSelect.innerHTML = ""; // Xóa danh sách cũ
+            audioTracks.forEach((track, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = track.name;
+                if (index === currentTrack) option.selected = true;
+                trackSelect.appendChild(option);
+            });
+        }
 
         // Khi nhạc kết thúc, chuyển sang bài kế tiếp
         audio.addEventListener("ended", () => {
             currentTrack = (currentTrack + 1) % audioTracks.length; // Lặp lại từ đầu sau bài cuối
-            audio.src = audioTracks[currentTrack];
+            localStorage.setItem("currentTrack", currentTrack); // Lưu lại trạng thái bài hát
+            audio.src = audioTracks[currentTrack].src;
             audio.play();
+            updateTrackSelect();
         });
 
-        // Khi ấn "Đóng" intro, bắt đầu phát nhạc
-        function closeIntro() {
-            document.getElementById("introBox").style.display = "none";
-            document.getElementById("overlay").style.display = "none";
-            
-            audio.src = audioTracks[currentTrack];
+        // Khi tải lại trang, tự động phát nhạc
+        window.addEventListener("load", () => {
+            audio.src = audioTracks[currentTrack].src;
+            audio.play().catch(() => {
+                console.log("Tự động phát bị chặn bởi trình duyệt.");
+            });
+            updateTrackSelect();
+        });
+
+        // Khi người dùng chọn bài hát từ extrabox2
+        trackSelect.addEventListener("change", (event) => {
+            currentTrack = parseInt(event.target.value);
+            localStorage.setItem("currentTrack", currentTrack); // Lưu lại trạng thái bài hát
+            audio.src = audioTracks[currentTrack].src;
             audio.play();
-        }
+        });
+        // Lấy phần tử video và nút "Xem background"
+        const videoBg = document.getElementById("backgroundVideo");
+        const viewBackgroundBtn = document.getElementById("viewBackgroundBtn");
+
+        // Khi ấn "Xem background", đảm bảo video tiếp tục phát
+        viewBackgroundBtn.addEventListener("click", () => {
+            videoBg.style.display = "block"; // Hiển thị video nếu bị ẩn
+            videoBg.play().catch(err => console.log("Lỗi phát video:", err)); // Phát video lại nếu bị dừng
+        });
 
 
     </script>
