@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Chờ</title>
+    <!-- Sử dụng Firebase phiên bản 8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: url('imgs/city.jpg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0px 0px 15px rgba(255, 0, 255, 0.5);
+            width: 350px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            position: absolute;
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        .container.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .container.enlarged {
+            transform: scale(1.3);
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 2px solid #00ffcc;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            border-radius: 5px;
+            outline: none;
+            text-align: center;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        button {
+            margin-top: 15px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #cc00cc, #00cccc);
+            transform: scale(1.05);
+        }
+        .group-selection {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .group-btn {
+            flex: 1;
+            margin: 0 5px;
+            padding: 12px;
+            background: #0066ff;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .group-btn:hover {
+            background: #0044cc;
+            transform: scale(1.1);
+        }
+        .waiting {
+            margin-top: 20px;
+        }
+        .player-list-btn {
+            margin-top: 10px;
+            background: #00ffcc;
+            color: black;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+        .player-list-btn:hover {
+            background: #00cc99;
+        }
+        .player-list {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 250px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 12px;
+            display: none;
+            padding: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 255, 255, 0.5);
+        }
+        .player-info {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+        .player-info .name {
+            color: #00ffcc;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .player-info .group {
+            color: white;
+            font-size: 22px;
+        }
+        .back-btn {
+            margin-top: 15px;
+            background: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        .back-btn:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+        .now-playing {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #00ffcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container active" id="nameInputSection">
+        <h2>Nhập tên của bạn</h2>
+        <input type="text" id="playerName" placeholder="Nhập tên..." />
+        <button onclick="enterName()">Xác nhận</button>
+    </div>
+
+    <div class="container" id="groupSelectionSection">
+        <h2>Chọn nhóm</h2>
+        <div class="group-selection">
+            <button class="group-btn" onclick="selectGroup(1)">Nhóm 1</button>
+            <button class="group-btn" onclick="selectGroup(2)">Nhóm 2</button>
+            <button class="group-btn" onclick="selectGroup(4)">Nhóm 4</button>
+        </div>
+        <button class="back-btn" onclick="goBack()">Quay lại</button>
+    </div>
+
+    <div class="container" id="waitingSection">
+        <h2>Vui lòng chờ...</h2>
+        <div class="player-info">
+            <div class="name" id="playerNameDisplay"></div>
+            <div class="group" id="playerGroupDisplay"></div>
+        </div>
+        <!-- Phần hiển thị bài nhạc đang phát -->
+        <div class="now-playing">
+            Bài nhạc đang phát: <span id="currentTrackName">Không có</span>
+        </div>
+        <button class="player-list-btn" onclick="showPlayerList()">Xem danh sách người chơi</button>
+    </div>
+
+    <iframe class="player-list" id="playerListFrame" src="leaderboard.html"></iframe>
+
+    <script>
+        // Cấu hình Firebase (Thay bằng thông tin của bạn)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpe2rXNkZjOuHbOLhNfIJl4fjfimD3ZzI",
+            authDomain: "quiz-team3.firebaseapp.com",
+            databaseURL: "https://quiz-team3-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "quiz-team3",
+            storageBucket: "quiz-team3.firebasestorage.app",
+            messagingSenderId: "944762295219",
+            appId: "1:944762295219:web:e47ddb35165fe2c648b1c6"
+        };
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let playerName = localStorage.getItem("playerName");
+        let playerGroup = localStorage.getItem("playerGroup");
+
+        // Hàm cập nhật tên bài hát đang phát
+        function updateCurrentTrackName() {
+            const currentTrackName = localStorage.getItem("currentTrackName") || "Không có";
+            document.getElementById("currentTrackName").innerText = currentTrackName;
+        }
+
+        // Hàm chuyển đổi giữa các phần
+        function switchSection(from, to) {
+            from.classList.remove("active");
+            setTimeout(() => {
+                to.classList.add("active");
+            }, 300); // Thời gian chờ để hiệu ứng fade hoàn tất
+        }
+
+        function enterName() {
+            let name = document.getElementById("playerName").value.trim();
+            if (name) {
+                localStorage.setItem("playerName", name);
+                switchSection(document.getElementById("nameInputSection"), document.getElementById("groupSelectionSection"));
+            } else {
+                alert("Vui lòng nhập tên của bạn!");
+            }
+        }
+
+        function selectGroup(group) {
+            if (confirm("Bạn có chắc chắn chọn nhóm này không?")) {
+                let name = localStorage.getItem("playerName");
+                localStorage.setItem("playerGroup", group);
+
+                // Lưu vào Firebase
+                db.ref("players/" + name).set({
+                    name: name,
+                    group: group
+                }).then(() => {
+                    switchSection(document.getElementById("groupSelectionSection"), document.getElementById("waitingSection"));
+                    document.getElementById("playerNameDisplay").innerText = name;
+                    document.getElementById("playerGroupDisplay").innerText = "Nhóm " + group;
+
+                    // Phóng to container
+                    document.getElementById("waitingSection").classList.add("enlarged");
+
+                    // Cập nhật tên bài hát đang phát
+                    updateCurrentTrackName();
+                }).catch((error) => {
+                    console.error("Lỗi khi lưu dữ liệu: ", error);
+                    alert("Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại!");
+                });
+            }
+        }
+
+        function goBack() {
+            // Xóa dữ liệu người chơi
+            let name = localStorage.getItem("playerName");
+            if (name) {
+                db.ref("players/" + name).remove().then(() => {
+                    localStorage.removeItem("playerName");
+                    localStorage.removeItem("playerGroup");
+                    switchSection(document.getElementById("groupSelectionSection"), document.getElementById("nameInputSection"));
+                }).catch((error) => {
+                    console.error("Lỗi khi xóa dữ liệu: ", error);
+                });
+            }
+        }
+
+        function showPlayerList() {
+            document.getElementById("playerListFrame").style.display = "block";
+        }
+
+        function clearPlayerData() {
+            let name = localStorage.getItem("playerName");
+            if (name) {
+                db.ref("players/" + name).remove().then(() => {
+                    localStorage.removeItem("playerName");
+                    localStorage.removeItem("playerGroup");
+                    location.reload();
+                }).catch((error) => {
+                    console.error("Lỗi khi xóa dữ liệu: ", error);
+                });
+            }
+        }
+
+        // Theo dõi sự thay đổi của currentTrackName trong localStorage
+        window.addEventListener("storage", function (event) {
+            if (event.key === "currentTrackName") {
+                updateCurrentTrackName();
+            }
+        });
+
+        // Khi ấn "=" trên bàn phím, xóa dữ liệu người chơi
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "=") {
+                clearPlayerData();
+            }
+        });
+
+        // Kiểm tra trạng thái người chơi khi tải lại trang
+        window.onload = function () {
+            if (playerName && playerGroup) {
+                document.getElementById("nameInputSection").classList.remove("active");
+                document.getElementById("groupSelectionSection").classList.remove("active");
+                document.getElementById("waitingSection").classList.add("active");
+                document.getElementById("playerNameDisplay").innerText = playerName;
+                document.getElementById("playerGroupDisplay").innerText = "Nhóm " + playerGroup;
+
+                // Phóng to container
+                document.getElementById("waitingSection").classList.add("enlarged");
+
+                // Cập nhật tên bài hát đang phát
+                updateCurrentTrackName();
+            } else if (playerName) {
+                document.getElementById("nameInputSection").classList.remove("active");
+                document.getElementById("groupSelectionSection").classList.add("active");
+            }
+        };
+    </script>
+</body>
+</html>

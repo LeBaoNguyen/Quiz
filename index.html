@@ -432,11 +432,11 @@
         </div>
         <div class="slider-container">
             <label for="audioSelect">Chọn nhạc nền:</label>
-            <select id="audioSelect" onchange="changeBackgroundMusic()">
-                <option value="audio/theme1.mp3">Nhạc nền 1</option>
-                <option value="audio/theme2.mp3">Dark Embient (Recommended)</option>
-                <option value="audio/theme3.mp3">Interstella Journey</option>
-                <option value="audio/theme4.mp3">This's fallin' in love</option>
+            <select id="audioSelect">
+                <option value="0">Nhạc nền 1</option>
+                <option value="1">Dark Ambient (Recommended)</option>
+                <option value="2">Interstella Journey</option>
+                <option value="3">This's fallin' in love</option>
             </select>
         </div>        
         <button class="close-btn" onclick="closeExtraBox2()">Đóng</button>
@@ -594,17 +594,22 @@
             audio.src = selectedAudio;
             audio.play(); // Phát ngay sau khi thay đổi nhạc
         }
-        // Danh sách nhạc theo thứ tự
+        // Danh sách nhạc
         const audioTracks = [
-            { src: "audio/theme1.mp3", name: "Theme 1" },
-            { src: "audio/theme2.mp3", name: "Theme 2" },
-            { src: "audio/theme3.mp3", name: "Theme 3" },
-            { src: "audio/theme4.mp3", name: "Theme 4" }
+            { src: "audio/theme1.mp3", name: "Nhạc nền 1" },
+            { src: "audio/theme2.mp3", name: "Dark Ambient (Recommended)" },
+            { src: "audio/theme3.mp3", name: "Interstella Journey" },
+            { src: "audio/theme4.mp3", name: "This's fallin' in love" }
         ];
-        let currentTrack = localStorage.getItem("currentTrack") ? parseInt(localStorage.getItem("currentTrack")) : 0;
 
+        let currentTrack = localStorage.getItem("currentTrack") ? parseInt(localStorage.getItem("currentTrack")) : 0;
         const audio = document.getElementById("backgroundMusic");
-        const trackSelect = document.getElementById("trackSelect");
+        const trackSelect = document.getElementById("audioSelect");
+
+        // Hàm cập nhật dropdown để hiển thị bài nhạc đang phát
+        function updateTrackSelect() {
+            trackSelect.selectedIndex = currentTrack;
+        }
 
         // Khi nhạc kết thúc, chuyển sang bài kế tiếp
         audio.addEventListener("ended", () => {
@@ -612,22 +617,25 @@
             localStorage.setItem("currentTrack", currentTrack); // Lưu lại trạng thái bài hát
             audio.src = audioTracks[currentTrack].src;
             audio.play();
+            updateTrackSelect(); // Cập nhật dropdown
         });
 
-        // Khi tải lại trang, tự động phát nhạc
-        // window.addEventListener("load", () => {
-        //     audio.src = audioTracks[currentTrack].src;
-        //     audio.play().catch(() => {
-        //         console.log("Tự động phát bị chặn bởi trình duyệt.");
-        //     });
-        // });
-
-        // Khi người dùng chọn bài hát từ extrabox2
+        // Khi người dùng chọn bài hát từ dropdown
         trackSelect.addEventListener("change", (event) => {
             currentTrack = parseInt(event.target.value);
             localStorage.setItem("currentTrack", currentTrack); // Lưu lại trạng thái bài hát
             audio.src = audioTracks[currentTrack].src;
             audio.play();
+            updateTrackSelect(); // Cập nhật dropdown
+        });
+
+        // Khi tải lại trang, tự động phát nhạc và cập nhật dropdown
+        window.addEventListener("load", () => {
+            audio.src = audioTracks[currentTrack].src;
+            updateTrackSelect(); // Cập nhật dropdown
+            audio.play().catch(() => {
+                console.log("Tự động phát bị chặn bởi trình duyệt.");
+            });
         });
         function restartVideo() {
             let video = document.querySelector("video");

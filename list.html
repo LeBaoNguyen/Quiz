@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Xếp Hạng</title>
+    <style>
+       body {
+            margin: 0; /* Loại bỏ margin mặc định */
+            padding: 10px; /* Giảm padding để phù hợp với iframe */
+            width: 100%; /* Đảm bảo nội dung không vượt quá chiều rộng iframe */
+            height: 100%; /* Đảm bảo nội dung không vượt quá chiều cao iframe */
+            box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+            overflow: auto; /* Thêm scrollbar nếu nội dung quá dài */
+        }
+        body {
+            overflow: auto; /* Thêm scrollbar nếu nội dung quá dài */
+        }
+
+        table {
+            width: 100%; /* Bảng chiếm toàn bộ chiều rộng */
+            border-collapse: collapse; /* Loại bỏ khoảng cách giữa các ô */
+        }
+
+h1 {
+    text-align: center;
+    color: #00ffcc;
+    margin-bottom: 10px; /* Giảm margin */
+    font-size: 20px; /* Giảm kích thước font */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 8px; /* Giảm border-radius */
+    overflow: hidden;
+    box-shadow: 0px 0px 10px rgba(0, 255, 255, 0.5); /* Giảm độ đổ bóng */
+    font-size: 14px; /* Giảm kích thước font */
+}
+
+th, td {
+    padding: 8px; /* Giảm padding */
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+th {
+    background-color: #333;
+    font-size: 16px; /* Giảm kích thước font */
+    font-weight: bold;
+    color: #00ffcc;
+}
+
+.highlight {
+    background-color: #4548f8; /* Màu nền vàng */
+    font-weight: bold;
+    border: 2px solid #56f95e; /* Viền màu cam */
+}
+    </style>
+</head>
+<body>
+    <h1>Bảng Xếp Hạng</h1>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên</th>
+                <th>Nhóm</th>
+                <th>Điểm</th> <!-- Thêm cột điểm số -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dữ liệu sẽ được thêm vào đây bằng JavaScript -->
+        </tbody>
+    </table>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // Cấu hình Firebase (giống với cấu hình trong trang chính)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpe2rXNkZjOuHbOLhNfIJl4fjfimD3ZzI",
+            authDomain: "quiz-team3.firebaseapp.com",
+            databaseURL: "https://quiz-team3-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "quiz-team3",
+            storageBucket: "quiz-team3.firebasestorage.app",
+            messagingSenderId: "944762295219",
+            appId: "1:944762295219:web:e47ddb35165fe2c648b1c6"
+        };
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // Hàm lấy tham số từ URL
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Lấy thông tin người chơi từ URL
+        const currentPlayerName = getParameterByName('playerName');
+        const currentPlayerGroup = getParameterByName('playerGroup');
+
+       // Lấy dữ liệu từ Firebase và hiển thị bảng xếp hạng
+const leaderboardTable = document.getElementById('leaderboard').getElementsByTagName('tbody')[0];
+
+db.ref('players').once('value', (snapshot) => {
+    const players = [];
+    snapshot.forEach((childSnapshot) => {
+        players.push(childSnapshot.val());
+    });
+
+    // Sắp xếp người chơi theo điểm số (giảm dần)
+    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // Hiển thị dữ liệu trong bảng
+    players.forEach((player, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${player.name}</td>
+            <td>Nhóm ${player.group}</td>
+            <td>${player.score || 0}</td> <!-- Thêm cột điểm số -->
+        `;
+
+        // Làm nổi bật cả dòng của người chơi hiện tại
+        if (player.name === currentPlayerName && player.group == currentPlayerGroup) {
+            row.classList.add('highlight');
+        }
+
+        leaderboardTable.appendChild(row);
+    });
+}).catch((error) => {
+    console.error("Lỗi khi lấy dữ liệu từ Firebase: ", error);
+});
+    </script>
+</body>
+</html>
