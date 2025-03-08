@@ -352,7 +352,6 @@
             border-radius: 10px;
         }
         /* Nút "Trở lại" */
-        /* Nút "Trở lại" */
         .closei-btn {
             position: absolute;
             top: 10px;
@@ -374,7 +373,6 @@
             background: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 10px white, 0 0 20px white;
         }
-
 
     </style>
 </head>
@@ -615,12 +613,12 @@
         });
 
         // Khi tải lại trang, tự động phát nhạc
-        // window.addEventListener("load", () => {
-        //     audio.src = audioTracks[currentTrack].src;
-        //     audio.play().catch(() => {
-        //         console.log("Tự động phát bị chặn bởi trình duyệt.");
-        //     });
-        // });
+        window.addEventListener("load", () => {
+            audio.src = audioTracks[currentTrack].src;
+            audio.play().catch(() => {
+                console.log("Tự động phát bị chặn bởi trình duyệt.");
+            });
+        });
 
         // Khi người dùng chọn bài hát từ extrabox2
         trackSelect.addEventListener("change", (event) => {
