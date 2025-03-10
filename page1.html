@@ -414,45 +414,60 @@
                 });
             });
 
-            // Đặt trạng thái game là "playing" trong Firebase
+            // Cập nhật trạng thái game trong Firebase
             db.ref("gameStatus").set("playing").then(() => {
                 console.log("Đã cập nhật trạng thái trò chơi thành 'playing'.");
 
-                // Gửi tín hiệu ngay lập tức cho index.html
+                // Gửi tín hiệu cho tất cả người chơi qua Firebase
+                db.ref("globalMessage").set({
+                    message: "startGame",
+                    timestamp: Date.now()  // Thêm timestamp để nhận diện cập nhật mới
+                });
+                
+                // Gửi tín hiệu cho chính thiết bị host để đổi iframe
                 window.parent.postMessage({ action: "startGame" }, "*");
             }).catch((error) => {
                 console.error("Lỗi khi cập nhật trạng thái trò chơi:", error);
             });
 
-            // Lưu trạng thái "đang chơi" vào localStorage (cho người host)
+            // Lưu trạng thái "đang chơi" vào localStorage
             localStorage.setItem("gameStatus", "playing");
         }
 
 
 
-        // Kiểm tra tổ hợp phím H O S T
-        let hostKeySequence = [];
-        document.addEventListener("keydown", function (event) {
-            hostKeySequence.push(event.key.toUpperCase());
-            if (hostKeySequence.length > 4) {
-                hostKeySequence.shift();
-            }
-            if (hostKeySequence.join("") === "HOST") {
-                activateHostMode();
-            }
-        });
 
-        // Khi ấn "=" trên bàn phím, xóa dữ liệu người chơi
-        let hostKey = [];
-        document.addEventListener("keydown", function (event) {
-            hostKey.push(event.key.toUpperCase());
-            if (hostKey.length > 3) {
-                hostKey.shift();
-            }
-            if (hostKey.join("") === "303") {
-                clearPlayerData();
-            }
-        });
+        let hostKeySequence = [];
+let resetKeySequence = [];
+
+// Xóa các listener cũ nếu tồn tại (tránh chồng chéo)
+window.removeEventListener("keydown", handleKeyPress);
+
+// Thêm lắng nghe sự kiện phím
+window.addEventListener("keydown", handleKeyPress);
+
+function handleKeyPress(event) {
+    const key = event.key.toUpperCase();
+
+    // Xử lý kích hoạt host bằng phím "H O S T"
+    hostKeySequence.push(key);
+    if (hostKeySequence.length > 4) hostKeySequence.shift();
+    if (hostKeySequence.join("") === "HOST") {
+        console.log("Kích hoạt Host Mode.");
+        activateHostMode();
+        hostKeySequence = []; // Xóa bộ nhớ đệm sau khi kích hoạt thành công
+    }
+
+    // Xử lý reset bằng phím "3 0 3"
+    resetKeySequence.push(key);
+    if (resetKeySequence.length > 3) resetKeySequence.shift();
+    if (resetKeySequence.join("") === "303") {
+        console.log("Đặt lại dữ liệu người chơi.");
+        clearPlayerData();
+        resetKeySequence = []; // Xóa bộ nhớ đệm sau khi xóa dữ liệu thành công
+    }
+}
+
 
         // Kiểm tra trạng thái người chơi khi tải lại trang
         window.onload = function () {

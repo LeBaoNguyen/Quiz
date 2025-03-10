@@ -760,14 +760,31 @@ function resetToNameInput() {
 
 // Gọi hàm syncData khi tải trang
 window.addEventListener("load", syncData);
-// Lắng nghe tín hiệu từ page1.html và game.html
+// Lắng nghe thay đổi từ Firebase
+db.ref("globalMessage").on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    if (data.message === "startGame") {
+        console.log("Nhận tín hiệu từ Firebase: Bắt đầu trò chơi.");
+        document.getElementById("game-frame").src = "game.html";
+    }
+
+    if (data.message === "returnToLobby") {
+        console.log("Nhận tín hiệu từ Firebase: Kết thúc trò chơi.");
+        document.getElementById("game-frame").src = "page1.html";
+    }
+});
+
+// Lắng nghe tín hiệu từ game.html hoặc Firebase
 window.addEventListener("message", (event) => {
     if (event.data.action === "startGame") {
         console.log("Nhận tín hiệu bắt đầu trò chơi từ host.");
         document.getElementById("game-frame").src = "game.html";
     }
     if (event.data.action === "returnToLobby") {
-        console.log("Quay trở lại phòng chờ...");
+        console.log("Nhận tín hiệu quay lại phòng chờ.");
+        localStorage.removeItem("gameStatus"); // Xóa trạng thái chơi game từ localStorage
         document.getElementById("game-frame").src = "page1.html";
     }
 });
