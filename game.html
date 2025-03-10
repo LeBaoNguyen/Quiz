@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Game</title>
+    <style>
+        /* Thiết lập video làm background */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo video phủ toàn bộ màn hình */
+            z-index: -1; /* Đặt video ở phía sau các phần tử khác */
+        }
+
+        /* Thiết lập nội dung trang game */
+        .content {
+            position: relative;
+            z-index: 1; /* Đảm bảo nội dung hiển thị trên video */
+            color: white;
+            text-align: center;
+            padding-top: 20%;
+            font-size: 24px;
+        }
+
+        /* CSS cho nút "Thoát" */
+        #exitGameButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        #exitGameButton:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+
+        /* CSS cho modal */
+        .modal {
+            display: none; /* Ẩn modal ban đầu */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Nền mờ */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Đảm bảo modal hiển thị trên các phần tử khác */
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 255, 255, 0.5);
+            text-align: center;
+            width: 300px;
+        }
+
+        .modal-content h2 {
+            color: #00ffcc;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .modal-buttons button.confirm {
+            background: #ff4444;
+            color: white;
+        }
+
+        .modal-buttons button.confirm:hover {
+            background: #cc0000;
+        }
+
+        .modal-buttons button.cancel {
+            background: #00cc00;
+            color: white;
+        }
+
+        .modal-buttons button.cancel:hover {
+            background: #009900;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video làm background -->
+    <video id="video-background" autoplay muted loop>
+        <source src="video/game.mp4" type="video/mp4">
+        Trình duyệt của bạn không hỗ trợ video.
+    </video>
+
+    <!-- Nội dung trang game -->
+    <div class="content">
+        <h1>Chào mừng đến với trò chơi!</h1>
+        <p>Trang game đang được phát triển...</p>
+    </div>
+
+    <!-- Nút "Thoát" -->
+    <button id="exitGameButton" onclick="openExitModal()">Thoát</button>
+
+    <!-- Modal xác nhận thoát -->
+    <div id="exitModal" class="modal">
+        <div class="modal-content">
+            <h2>Dữ liệu sẽ không được lưu, bạn có chắc chắn chứ?</h2>
+            <div class="modal-buttons">
+                <button class="confirm" onclick="confirmExit()">Xác nhận</button>
+                <button class="cancel" onclick="closeExitModal()">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thêm Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Cấu hình Firebase (sao chép từ index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpe2rXNkZjOuHbOLhNfIJl4fjfimD3ZzI",
+            authDomain: "quiz-team3.firebaseapp.com",
+            databaseURL: "https://quiz-team3-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "quiz-team3",
+            storageBucket: "quiz-team3.firebasestorage.app",
+            messagingSenderId: "944762295219",
+            appId: "1:944762295219:web:e47ddb35165fe2c648b1c6"
+        };
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database(); // Tham chiếu đến Realtime Database
+
+        // Hàm mở modal thoát
+        function openExitModal() {
+            console.log("Nút Thoát được nhấn"); // Kiểm tra sự kiện click
+            const exitModal = document.getElementById("exitModal");
+            exitModal.style.display = "flex"; // Hiển thị modal
+        }
+
+        // Hàm đóng modal thoát
+        function closeExitModal() {
+            console.log("Hủy thoát"); // Kiểm tra sự kiện click
+            const exitModal = document.getElementById("exitModal");
+            exitModal.style.display = "none"; // Ẩn modal
+        }
+
+        // Hàm xác nhận thoát
+        function confirmExit() {
+            const playerName = localStorage.getItem("playerName");
+
+            // Xóa dữ liệu người chơi khỏi Firebase
+            if (playerName) {
+                db.ref("players/" + playerName).remove().then(() => {
+                    console.log("Dữ liệu người chơi đã được xóa khỏi Firebase");
+                }).catch((error) => {
+                    console.error("Lỗi khi xóa dữ liệu người chơi: ", error);
+                });
+            }
+
+            // Xóa dữ liệu Host khỏi Firebase (nếu là Host)
+            const isHost = localStorage.getItem("isHost") === "true";
+            if (isHost) {
+                db.ref("hosts/" + playerName).remove().then(() => {
+                    console.log("Dữ liệu Host đã được xóa khỏi Firebase");
+                }).catch((error) => {
+                    console.error("Lỗi khi xóa dữ liệu Host: ", error);
+                });
+            }
+
+            // Xóa tất cả dữ liệu trong localStorage
+            localStorage.clear();
+            console.log("localStorage đã được xóa");
+
+            // Đóng iframe và quay về trang chủ
+            window.top.location.href = "index.html"; // Quay về trang chủ
+        }
+    </script>
+</body>
+</html>

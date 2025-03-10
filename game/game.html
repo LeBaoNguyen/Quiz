@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Game</title>
+    <style>
+        /* Thiết lập video làm background */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo video phủ toàn bộ màn hình */
+            z-index: -1; /* Đặt video ở phía sau các phần tử khác */
+        }
+
+        /* Thiết lập nội dung trang game */
+        .content {
+            position: relative;
+            z-index: 1; /* Đảm bảo nội dung hiển thị trên video */
+            color: white;
+            text-align: center;
+            padding-top: 20%;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video làm background -->
+    <video id="video-background" autoplay muted loop>
+        <source src="video/game.mp4" type="video/mp4">
+        Trình duyệt của bạn không hỗ trợ video.
+    </video>
+
+    <!-- Nội dung trang game -->
+    <div class="content">
+        <h1>Chào mừng đến với trò chơi!</h1>
+        <p>Trang game đang được phát triển...</p>
+    </div>
+</body>
+</html>

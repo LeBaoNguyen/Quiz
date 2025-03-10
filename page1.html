@@ -277,7 +277,7 @@
         }
 
         function selectGroup(group) {
-            if (confirm("Bạn có chắc chắn chọn nhóm này không?")) {
+            if (confirm("Bạn có chắc đã chọn đúng nhóm chứ? Sai nhóm sẽ không có quà đâu!")) {
                 let name = localStorage.getItem("playerName");
                 localStorage.setItem("playerGroup", group);
 
@@ -356,14 +356,19 @@
 
         // Hàm kích hoạt Host Mode
         function activateHostMode() {
-            localStorage.setItem("isHost", "true");
-            db.ref("host/").set({
-                name: "HOST",
+            const playerName = localStorage.getItem("playerName");
+            const playerGroup = localStorage.getItem("playerGroup");
+
+            // Thêm host vào danh sách host trong Firebase
+            db.ref("hosts/" + playerName).set({
+                name: playerName,
+                group: playerGroup,
                 status: "active"
             }).then(() => {
+                localStorage.setItem("isHost", "true");
                 switchSection(document.getElementById("nameInputSection"), document.getElementById("waitingSection"));
-                document.getElementById("playerNameDisplay").innerText = "HOST";
-                document.getElementById("playerGroupDisplay").innerText = "";
+                document.getElementById("playerNameDisplay").innerText = playerName;
+                document.getElementById("playerGroupDisplay").innerText = "HOST";
                 document.getElementById("waitingTitle").innerText = "Chủ phòng";
                 document.getElementById("startButton").classList.remove("hidden"); // Hiển thị nút "Bắt đầu"
 
@@ -385,6 +390,11 @@
                     });
                 });
             });
+            
+            localStorage.setItem("gameStarted", "true");
+
+            // Lưu trạng thái "đang chơi" vào localStorage
+            localStorage.setItem("gameStatus", "playing");
 
             // Chuyển đến trang game (ví dụ: game.html)
             window.location.href = "game.html"; // Thay "game.html" bằng đường dẫn trang game của bạn
@@ -403,8 +413,13 @@
         });
 
         // Khi ấn "=" trên bàn phím, xóa dữ liệu người chơi
+        let hostKey = [];
         document.addEventListener("keydown", function (event) {
-            if (event.key === "=") {
+            hostKey.push(event.key.toUpperCase());
+            if (hostKey.length > 3) {
+                hostKey.shift();
+            }
+            if (hostKey.join("") === "303") {
                 clearPlayerData();
             }
         });
@@ -444,6 +459,75 @@
                 playerListFrame.style.display = 'none';
             }
         });
+        // Hàm xóa host khi rời khỏi phòng
+        function removeHost() {
+            const playerName = localStorage.getItem("playerName");
+            if (playerName) {
+                db.ref("hosts/" + playerName).remove().catch((error) => {
+                    console.error("Lỗi khi xóa host: ", error);
+                });
+            }
+        }
+
+        // Gọi hàm này khi người chơi rời khỏi phòng
+        window.addEventListener("beforeunload", removeHost);
+        // Lắng nghe sự kiện nhấn phím "Enter" trong trường nhập tên
+        document.getElementById("playerName").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") { // Kiểm tra nếu phím được nhấn là "Enter"
+                enterName(); // Gọi hàm xác nhận tên
+            }
+        });
+
+        function enterName() {
+            let name = document.getElementById("playerName").value.trim();
+            if (name) {
+                localStorage.setItem("playerName", name);
+                switchSection(document.getElementById("nameInputSection"), document.getElementById("groupSelectionSection"));
+            } else {
+                alert("Vui lòng nhập tên của bạn!");
+            }
+        }
+        // Hàm cập nhật thời gian hoạt động cuối cùng
+        function updateLastActivityTime() {
+            const playerName = localStorage.getItem("playerName");
+            if (playerName) {
+                const currentTime = new Date().getTime(); // Lấy thời gian hiện tại (timestamp)
+                db.ref("players/" + playerName).update({
+                    lastActivityTime: currentTime // Lưu thời gian hoạt động cuối cùng
+                }).catch((error) => {
+                    console.error("Lỗi khi cập nhật thời gian hoạt động: ", error);
+                });
+            }
+        }
+
+        // Cập nhật thời gian hoạt động khi người dùng tương tác
+        document.addEventListener("click", updateLastActivityTime);
+        document.addEventListener("keydown", updateLastActivityTime);
+        // Hàm kiểm tra và xóa dữ liệu nếu không hoạt động
+        function checkInactivePlayers() {
+            const currentTime = new Date().getTime();
+            const inactivityThreshold = 60 * 60 * 1000; // 1 giờ (tính bằng mili giây)
+
+            db.ref("players").once("value", (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const player = childSnapshot.val();
+                    const lastActivityTime = player.lastActivityTime || 0;
+
+                    // Nếu không hoạt động quá 1 giờ, xóa dữ liệu
+                    if (currentTime - lastActivityTime > inactivityThreshold) {
+                        db.ref("players/" + player.name).remove().catch((error) => {
+                            console.error("Lỗi khi xóa người chơi không hoạt động: ", error);
+                        });
+                    }
+                });
+            }).catch((error) => {
+                console.error("Lỗi khi kiểm tra người chơi không hoạt động: ", error);
+            });
+        }
+
+        // Kiểm tra định kỳ mỗi 5 phút
+        setInterval(checkInactivePlayers, 5 * 60 * 1000); // 5 phút (tính bằng mili giây)
+                
     </script>
 </body>
 </html>
