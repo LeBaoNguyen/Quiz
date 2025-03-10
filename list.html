@@ -141,6 +141,70 @@ th {
         }).catch((error) => {
             console.error("Lỗi khi lấy dữ liệu từ Firebase: ", error);
         });
+        function syncData() {
+    const playerName = localStorage.getItem("playerName");
+
+    if (!playerName) {
+        console.log("Không tìm thấy thông tin người chơi trong Local Storage.");
+
+        // Nếu không tìm thấy thông tin trong Local Storage thì xóa dữ liệu của người đó trong Firebase
+        db.ref("players/" + playerName).remove().then(() => {
+            console.log("Đã xóa dữ liệu người chơi khỏi Firebase vì không có trong Local Storage.");
+        }).catch((error) => {
+            console.error("Lỗi khi xóa dữ liệu người chơi từ Firebase:", error);
+        });
+
+        db.ref("hosts/" + playerName).remove().then(() => {
+            console.log("Đã xóa dữ liệu Host khỏi Firebase vì không có trong Local Storage.");
+        }).catch((error) => {
+            console.error("Lỗi khi xóa dữ liệu Host từ Firebase:", error);
+        });
+
+        return;
+    }
+
+    // Kiểm tra dữ liệu của người chơi trong Firebase
+    db.ref("players/" + playerName).once("value", (snapshot) => {
+        if (!snapshot.exists()) {
+            console.log("Không tìm thấy dữ liệu người chơi trong Firebase.");
+
+            // Nếu không tồn tại trong Firebase thì xóa dữ liệu Local Storage
+            localStorage.removeItem("playerName");
+            localStorage.removeItem("playerGroup");
+            localStorage.removeItem("isHost");
+            localStorage.removeItem("gameStatus");
+
+            console.log("Đã xóa dữ liệu người chơi khỏi Local Storage.");
+        } else {
+            console.log("Dữ liệu người chơi trong Firebase tồn tại, đồng bộ thành công.");
+        }
+    }).catch((error) => {
+        console.error("Lỗi khi kiểm tra dữ liệu người chơi trong Firebase:", error);
+    });
+
+    // Kiểm tra dữ liệu của host trong Firebase
+    db.ref("hosts/" + playerName).once("value", (snapshot) => {
+        if (!snapshot.exists() && localStorage.getItem("isHost") === "true") {
+            console.log("Không tìm thấy dữ liệu Host trong Firebase.");
+
+            // Xóa dữ liệu host trong Local Storage
+            localStorage.removeItem("playerName");
+            localStorage.removeItem("playerGroup");
+            localStorage.removeItem("isHost");
+            localStorage.removeItem("gameStatus");
+
+            console.log("Đã xóa dữ liệu Host khỏi Local Storage.");
+        } else if (snapshot.exists()) {
+            console.log("Dữ liệu Host trong Firebase tồn tại, đồng bộ thành công.");
+        }
+    }).catch((error) => {
+        console.error("Lỗi khi kiểm tra dữ liệu Host trong Firebase:", error);
+    });
+}
+
+// Gọi hàm syncData khi tải trang
+window.addEventListener("load", syncData);
+
     </script>
 </body>
 </html>

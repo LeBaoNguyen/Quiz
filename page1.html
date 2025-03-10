@@ -285,20 +285,30 @@
                 db.ref("players/" + name).set({
                     name: name,
                     group: group,
-                    score: 0 // Thêm điểm số mặc định
+                    score: 0
                 }).then(() => {
-                    switchSection(document.getElementById("groupSelectionSection"), document.getElementById("waitingSection"));
-                    document.getElementById("playerNameDisplay").innerText = name;
-                    document.getElementById("playerGroupDisplay").innerText = "Nhóm " + group;
+                    // Kiểm tra trạng thái game hiện tại
+                    db.ref("gameStatus").once("value", (snapshot) => {
+                        if (snapshot.val() === "playing") {
+                            // Nếu trò chơi đang diễn ra, gửi tín hiệu cho index.html để vào game
+                            window.parent.postMessage({ action: "startGame" }, "*");
+                        } else {
+                            // Nếu không thì vào phòng chờ như bình thường
+                            switchSection(document.getElementById("groupSelectionSection"), document.getElementById("waitingSection"));
+                            document.getElementById("playerNameDisplay").innerText = name;
+                            document.getElementById("playerGroupDisplay").innerText = "Nhóm " + group;
 
-                    // Phóng to container
-                    document.getElementById("waitingSection").classList.add("enlarged");
+                            // Phóng to container
+                            document.getElementById("waitingSection").classList.add("enlarged");
+                        }
+                    });
                 }).catch((error) => {
                     console.error("Lỗi khi lưu dữ liệu: ", error);
                     alert("Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại!");
                 });
             }
         }
+
 
         function goBack() {
             // Xóa dữ liệu người chơi
@@ -354,7 +364,6 @@
             location.reload(); // Tải lại trang để đảm bảo giao diện được reset
         }
 
-        // Hàm kích hoạt Host Mode
         function activateHostMode() {
             const playerName = localStorage.getItem("playerName");
             const playerGroup = localStorage.getItem("playerGroup");
@@ -366,22 +375,36 @@
                 status: "active"
             }).then(() => {
                 localStorage.setItem("isHost", "true");
-                switchSection(document.getElementById("nameInputSection"), document.getElementById("waitingSection"));
-                document.getElementById("playerNameDisplay").innerText = playerName;
-                document.getElementById("playerGroupDisplay").innerText = "HOST";
-                document.getElementById("waitingTitle").innerText = "Chủ phòng";
-                document.getElementById("startButton").classList.remove("hidden"); // Hiển thị nút "Bắt đầu"
+                isHost = true;  // Cập nhật biến toàn cục ngay lập tức
 
-                // Phóng to container
-                document.getElementById("waitingSection").classList.add("enlarged");
+                // Kiểm tra trạng thái trò chơi hiện tại
+                db.ref("gameStatus").once("value", (snapshot) => {
+                    if (snapshot.val() === "playing") {
+                        console.log("Trò chơi đang diễn ra. Host sẽ tham gia ngay lập tức.");
+                        // Nếu đang chơi, gửi tín hiệu cho index.html để vào game
+                        window.parent.postMessage({ action: "startGame" }, "*");
+                    } else {
+                        // Nếu không thì hiển thị giao diện chờ như bình thường
+                        switchSection(document.getElementById("nameInputSection"), document.getElementById("waitingSection"));
+                        document.getElementById("playerNameDisplay").innerText = "HOST";
+                        document.getElementById("playerGroupDisplay").innerText = "";
+                        document.getElementById("waitingTitle").innerText = "Chủ phòng";
+                        document.getElementById("startButton").classList.remove("hidden");
+                        document.getElementById("waitingSection").classList.add("enlarged");
+                    }
+                });
             }).catch((error) => {
                 console.error("Lỗi khi kích hoạt Host Mode: ", error);
             });
         }
 
-        // Hàm bắt đầu game
+
         function startGame() {
-            // Chuyển tất cả người chơi đến trang game
+            if (!isHost) return;
+
+            console.log("Bắt đầu trò chơi...");
+
+            // Cập nhật trạng thái của tất cả người chơi thành "playing"
             db.ref("players/").once("value", (snapshot) => {
                 snapshot.forEach((childSnapshot) => {
                     let player = childSnapshot.val();
@@ -390,15 +413,22 @@
                     });
                 });
             });
-            
-            localStorage.setItem("gameStarted", "true");
 
-            // Lưu trạng thái "đang chơi" vào localStorage
+            // Đặt trạng thái game là "playing" trong Firebase
+            db.ref("gameStatus").set("playing").then(() => {
+                console.log("Đã cập nhật trạng thái trò chơi thành 'playing'.");
+
+                // Gửi tín hiệu ngay lập tức cho index.html
+                window.parent.postMessage({ action: "startGame" }, "*");
+            }).catch((error) => {
+                console.error("Lỗi khi cập nhật trạng thái trò chơi:", error);
+            });
+
+            // Lưu trạng thái "đang chơi" vào localStorage (cho người host)
             localStorage.setItem("gameStatus", "playing");
-
-            // Chuyển đến trang game (ví dụ: game.html)
-            window.location.href = "game.html"; // Thay "game.html" bằng đường dẫn trang game của bạn
         }
+
+
 
         // Kiểm tra tổ hợp phím H O S T
         let hostKeySequence = [];
@@ -527,6 +557,81 @@
 
         // Kiểm tra định kỳ mỗi 5 phút
         setInterval(checkInactivePlayers, 5 * 60 * 1000); // 5 phút (tính bằng mili giây)
+        function syncData() {
+    const playerName = localStorage.getItem("playerName");
+
+    if (!playerName) {
+        console.log("Không tìm thấy thông tin người chơi trong Local Storage.");
+
+        // Xóa dữ liệu của người đó trên Firebase nếu không có trong Local Storage
+        db.ref("players/" + playerName).remove().then(() => {
+            console.log("Đã xóa dữ liệu người chơi khỏi Firebase.");
+        }).catch((error) => {
+            console.error("Lỗi khi xóa dữ liệu người chơi từ Firebase:", error);
+        });
+
+        db.ref("hosts/" + playerName).remove().then(() => {
+            console.log("Đã xóa dữ liệu Host khỏi Firebase.");
+        }).catch((error) => {
+            console.error("Lỗi khi xóa dữ liệu Host từ Firebase:", error);
+        });
+
+        // Cho phép người chơi đặt lại tên và chọn nhóm
+        resetToNameInput();
+        return;
+    }
+
+    // Kiểm tra dữ liệu của người chơi trong Firebase
+    db.ref("players/" + playerName).once("value", (snapshot) => {
+        if (!snapshot.exists()) {
+            console.log("Không tìm thấy dữ liệu người chơi trong Firebase.");
+
+            // Xóa dữ liệu Local Storage vì người chơi không tồn tại trong Firebase
+            localStorage.removeItem("playerName");
+            localStorage.removeItem("playerGroup");
+            localStorage.removeItem("isHost");
+            localStorage.removeItem("gameStatus");
+
+            console.log("Đã xóa dữ liệu người chơi khỏi Local Storage.");
+            resetToNameInput();
+        } else {
+            console.log("Dữ liệu người chơi trong Firebase tồn tại, đồng bộ thành công.");
+        }
+    }).catch((error) => {
+        console.error("Lỗi khi kiểm tra dữ liệu người chơi trong Firebase:", error);
+    });
+
+    // Kiểm tra dữ liệu của host trong Firebase
+    db.ref("hosts/" + playerName).once("value", (snapshot) => {
+        if (!snapshot.exists() && localStorage.getItem("isHost") === "true") {
+            console.log("Không tìm thấy dữ liệu Host trong Firebase.");
+
+            // Xóa dữ liệu Local Storage của Host
+            localStorage.removeItem("playerName");
+            localStorage.removeItem("playerGroup");
+            localStorage.removeItem("isHost");
+            localStorage.removeItem("gameStatus");
+
+            console.log("Đã xóa dữ liệu Host khỏi Local Storage.");
+            resetToNameInput();
+        } else if (snapshot.exists()) {
+            console.log("Dữ liệu Host trong Firebase tồn tại, đồng bộ thành công.");
+        }
+    }).catch((error) => {
+        console.error("Lỗi khi kiểm tra dữ liệu Host trong Firebase:", error);
+    });
+}
+
+// Hàm đưa người chơi về phần nhập tên nếu bị xóa dữ liệu
+function resetToNameInput() {
+    document.getElementById("nameInputSection").classList.add("active");
+    document.getElementById("groupSelectionSection").classList.remove("active");
+    document.getElementById("waitingSection").classList.remove("active");
+}
+
+// Gọi hàm syncData khi tải trang
+window.addEventListener("load", syncData);
+
                 
     </script>
 </body>
